@@ -1,4 +1,4 @@
-package com.apptitive.bluetootha2dp;
+package com.apptitive.btmusicplayer;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -21,8 +21,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.apptitive.bluetootha2dp.connection.ClientThread;
-import com.apptitive.bluetootha2dp.connection.ServerThread;
+import com.apptitive.btmusicplayer.connection.ClientThread;
+import com.apptitive.btmusicplayer.connection.ServerThread;
 
 import java.util.Set;
 

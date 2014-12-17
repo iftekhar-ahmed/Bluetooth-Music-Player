@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.apptitive.bluetootha2dp" >
+    package="com.apptitive.btmusicplayer" >
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -11,7 +11,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.apptitive.bluetootha2dp.BluetoothActivity"
+            android:name="com.apptitive.btmusicplayer.BluetoothActivity"
             android:label="@string/title_activity_bluetooth" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

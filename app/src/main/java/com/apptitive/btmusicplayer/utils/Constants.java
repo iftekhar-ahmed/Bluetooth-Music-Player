@@ -1,4 +1,4 @@
-package com.apptitive.bluetootha2dp.utils;
+package com.apptitive.btmusicplayer.utils;
 
 import java.util.UUID;
 

@@ -1,4 +1,4 @@
-package com.apptitive.bluetootha2dp;
+package com.apptitive.btmusicplayer;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

@@ -1,4 +1,4 @@
-package com.apptitive.bluetootha2dp.connection;
+package com.apptitive.btmusicplayer.connection;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
@@ -9,7 +9,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.apptitive.bluetootha2dp.utils.Constants;
+import com.apptitive.btmusicplayer.utils.Constants;
 
 import java.io.IOException;
 

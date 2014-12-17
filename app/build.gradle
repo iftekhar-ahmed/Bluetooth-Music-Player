@@ -5,7 +5,7 @@ android {
     buildToolsVersion "20.0.0"
 
     defaultConfig {
-        applicationId "com.apptitive.bluetootha2dp"
+        applicationId "com.apptitive.btmusicplayer"
         minSdkVersion 11
         targetSdkVersion 21
         versionCode 1
