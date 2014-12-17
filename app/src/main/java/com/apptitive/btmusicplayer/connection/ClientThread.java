@@ -23,8 +23,7 @@ public class ClientThread extends Thread {
 
     public ClientThread(Context context, BluetoothDevice bluetoothDevice) {
         this.context = context;
-        bluetoothAdapter = Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2
-                ? BluetoothAdapter.getDefaultAdapter() : (BluetoothAdapter) context.getSystemService(Context.BLUETOOTH_SERVICE);
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         BluetoothSocket tempSocket = null;
         try {
             tempSocket = bluetoothDevice.createRfcommSocketToServiceRecord(Constants.SERVICE_UUID);

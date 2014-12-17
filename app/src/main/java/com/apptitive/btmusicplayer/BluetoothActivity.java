@@ -64,7 +64,7 @@ public class BluetoothActivity extends ActionBarActivity {
     }
 
     /**
-     * A placeholder fragment containing a simple view.
+     * Fragment containing views for bluetooth connections.
      */
     public static class BluetoothFragment extends Fragment implements View.OnClickListener {
 
@@ -119,8 +119,7 @@ public class BluetoothActivity extends ActionBarActivity {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            bluetoothAdapter = Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2
-                    ? BluetoothAdapter.getDefaultAdapter() : (BluetoothAdapter) getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         }
 
         @Override
