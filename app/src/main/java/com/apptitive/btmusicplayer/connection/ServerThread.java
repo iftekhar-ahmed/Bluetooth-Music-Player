@@ -24,8 +24,7 @@ public class ServerThread extends Thread {
 
     public ServerThread(Context context) {
         this.context = context;
-        mBluetoothAdapter = Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2
-                ? BluetoothAdapter.getDefaultAdapter() : (BluetoothAdapter) context.getSystemService(Context.BLUETOOTH_SERVICE);
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         BluetoothServerSocket bluetoothServerSocket = null;
         try {
             bluetoothServerSocket = mBluetoothAdapter.listenUsingRfcommWithServiceRecord(Constants.SERVICE_NAME, Constants.SERVICE_UUID);
@@ -45,6 +44,7 @@ public class ServerThread extends Thread {
                 break;
             }
             if (bluetoothSocket != null) {
+                Log.i("From Server", "client connected");
                 Handler handler = new Handler(context.getMainLooper());
                 handler.post(new Runnable() {
                     @Override

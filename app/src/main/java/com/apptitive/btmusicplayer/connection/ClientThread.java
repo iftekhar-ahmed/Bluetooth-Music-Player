@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.apptitive.btmusicplayer.utils.Constants;
@@ -24,9 +25,11 @@ public class ClientThread extends Thread {
     public ClientThread(Context context, BluetoothDevice bluetoothDevice) {
         this.context = context;
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        Log.i("bluetooth device", bluetoothDevice.getName());
         BluetoothSocket tempSocket = null;
         try {
             tempSocket = bluetoothDevice.createRfcommSocketToServiceRecord(Constants.SERVICE_UUID);
+            Log.i("UUID", Constants.SERVICE_UUID.toString());
         } catch (IOException e) {
         }
         mBluetoothSocket = tempSocket;
@@ -37,10 +40,13 @@ public class ClientThread extends Thread {
         bluetoothAdapter.cancelDiscovery();
         try {
             mBluetoothSocket.connect();
-        } catch (IOException e) {
+            Log.i("From Client", "server connected");
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
             try {
                 mBluetoothSocket.close();
-            } catch (IOException e1) {
+                Log.i("From Client", "closing socket...");
+            } catch (IOException e) {
             }
             return;
         }
