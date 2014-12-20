@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -132,7 +131,6 @@ public class BluetoothActivity extends ActionBarActivity {
         @Override
         public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
             super.onViewCreated(view, savedInstanceState);
-            view.findViewById(R.id.btn_start_bluetooth).setOnClickListener(this);
             spinnerPairedDevices = (Spinner) view.findViewById(R.id.spinner_paired_devices);
             if (bluetoothAdapter != null && bluetoothAdapter.isEnabled()) {
                 listPairedDevices();
@@ -143,19 +141,17 @@ public class BluetoothActivity extends ActionBarActivity {
             }
             view.findViewById(R.id.btn_server).setOnClickListener(this);
             view.findViewById(R.id.btn_client).setOnClickListener(this);
+            if (bluetoothAdapter == null) {
+                Toast.makeText(getActivity(), "Your device does not support Bluetooth", Toast.LENGTH_SHORT).show();
+            } else if (!bluetoothAdapter.isEnabled()) {
+                Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(intent, REQUEST_ENABLE_BT);
+            }
         }
 
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
-                case R.id.btn_start_bluetooth:
-                    if (bluetoothAdapter == null) {
-                        Toast.makeText(getActivity(), "Bluetooth not supported", Toast.LENGTH_SHORT).show();
-                    } else if (!bluetoothAdapter.isEnabled()) {
-                        Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                        startActivityForResult(intent, REQUEST_ENABLE_BT);
-                    }
-                    break;
                 case R.id.btn_server:
                     ServerThread serverThread = new ServerThread(getActivity());
                     serverThread.start();
@@ -169,7 +165,9 @@ public class BluetoothActivity extends ActionBarActivity {
 
         @Override
         public void onDestroy() {
-            getActivity().unregisterReceiver(deviceFoundReceiver);
+            if (bluetoothAdapter.isEnabled()) {
+                getActivity().unregisterReceiver(deviceFoundReceiver);
+            }
             super.onDestroy();
         }
 
@@ -179,7 +177,6 @@ public class BluetoothActivity extends ActionBarActivity {
             if (requestCode == REQUEST_ENABLE_BT) {
                 switch (resultCode) {
                     case RESULT_OK:
-                        Toast.makeText(getActivity(), "Thank you for enabling bluetooth", Toast.LENGTH_SHORT).show();
                         listPairedDevices();
                         if (bluetoothAdapter.startDiscovery()) {
                             IntentFilter deviceFoundIntentFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -187,8 +184,8 @@ public class BluetoothActivity extends ActionBarActivity {
                         }
                         break;
                     case RESULT_CANCELED:
-                        Toast.makeText(getActivity(), "Oops :(", Toast.LENGTH_SHORT).show();
-                        break;
+                        Toast.makeText(getActivity(), "Bluetooth not enabled. Exiting app", Toast.LENGTH_SHORT).show();
+                        getActivity().finish();
                 }
             }
         }
