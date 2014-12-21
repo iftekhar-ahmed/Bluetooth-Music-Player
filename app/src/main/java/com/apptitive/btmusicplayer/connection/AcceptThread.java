@@ -4,10 +4,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
-import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.apptitive.btmusicplayer.utils.Constants;
 
@@ -16,14 +14,17 @@ import java.io.IOException;
 /**
  * Created by Iftekhar on 11/8/2014.
  */
-public class ServerThread extends Thread {
+public class AcceptThread extends Thread {
 
     private BluetoothServerSocket mServerSocket;
+    private BluetoothSocket connectedSocket;
     private BluetoothAdapter mBluetoothAdapter;
     private Context context;
+    private Handler mHandler;
 
-    public ServerThread(Context context) {
+    public AcceptThread(Context context, Handler handler) {
         this.context = context;
+        mHandler = handler;
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         BluetoothServerSocket bluetoothServerSocket = null;
         try {
@@ -45,16 +46,15 @@ public class ServerThread extends Thread {
             }
             if (bluetoothSocket != null) {
                 Log.i("From Server", "client connected");
-                Handler handler = new Handler(context.getMainLooper());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(context, "One connection established", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                connectedSocket = bluetoothSocket;
+                mHandler.obtainMessage(Constants.STATE_CONNECTED).sendToTarget();
                 break;
             }
         }
+    }
+
+    public synchronized BluetoothSocket getConnectedSocket() {
+        return connectedSocket;
     }
 
     public void cancel() {

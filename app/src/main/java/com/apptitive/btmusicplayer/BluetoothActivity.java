@@ -2,11 +2,14 @@ package com.apptitive.btmusicplayer;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
@@ -20,10 +23,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.apptitive.btmusicplayer.connection.ClientThread;
-import com.apptitive.btmusicplayer.connection.ServerThread;
+import com.apptitive.btmusicplayer.connection.AcceptThread;
+import com.apptitive.btmusicplayer.connection.ConnectThread;
 
 import java.util.Set;
+
+import static com.apptitive.btmusicplayer.utils.Constants.CONNECTION_FAILED;
+import static com.apptitive.btmusicplayer.utils.Constants.STATE_CONNECTED;
 
 
 public class BluetoothActivity extends ActionBarActivity {
@@ -67,23 +73,39 @@ public class BluetoothActivity extends ActionBarActivity {
      */
     public static class BluetoothFragment extends Fragment implements View.OnClickListener {
 
-        static final int REQUEST_ENABLE_BT = 100;
-        private BluetoothAdapter bluetoothAdapter;
+        private int mState;
 
         private Spinner spinnerPairedDevices;
-        private ServerThread mServerThread;
-        private ClientThread mClientThread;
+        private BluetoothAdapter bluetoothAdapter;
+        private AcceptThread mAcceptThread;
+        private ConnectThread mConnectThread;
+        private BluetoothSocket mConnectedSocket;
         private ArrayAdapter<BluetoothDevice> arrayAdapterPairedDevices;
+
+        private static final int REQUEST_ENABLE_BT = 100;
 
         public BluetoothFragment() {
         }
 
-        /*private final Handler mHandler = new Handler() {
+        private final Handler mHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
-
+                mState = msg.what;
+                switch (mState) {
+                    case STATE_CONNECTED:
+                        mConnectedSocket = mAcceptThread.getConnectedSocket();
+                        mAcceptThread.cancel();
+                        mAcceptThread = null;
+                        mConnectThread.cancel();
+                        mConnectThread = null;
+                        Toast.makeText(getActivity(), "One connection established", Toast.LENGTH_SHORT).show();
+                        break;
+                    case CONNECTION_FAILED:
+                        Toast.makeText(getActivity(), "Could not connect", Toast.LENGTH_SHORT).show();
+                        break;
+                }
             }
-        };*/
+        };
 
         private final BroadcastReceiver deviceFoundReceiver = new BroadcastReceiver() {
             @Override
@@ -153,8 +175,8 @@ public class BluetoothActivity extends ActionBarActivity {
                 Toast.makeText(getActivity(), "Your device does not support Bluetooth", Toast.LENGTH_SHORT).show();
             } else {
                 if (bluetoothAdapter.isEnabled()) {
-                    mServerThread = new ServerThread(getActivity());
-                    mServerThread.start();
+                    mAcceptThread = new AcceptThread(getActivity(), mHandler);
+                    mAcceptThread.start();
                 } else {
                     Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                     startActivityForResult(intent, REQUEST_ENABLE_BT);
@@ -166,8 +188,8 @@ public class BluetoothActivity extends ActionBarActivity {
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.btn_connect:
-                    mClientThread = new ClientThread(getActivity(), arrayAdapterPairedDevices.getItem(spinnerPairedDevices.getSelectedItemPosition()));
-                    mClientThread.start();
+                    mConnectThread = new ConnectThread(getActivity(), arrayAdapterPairedDevices.getItem(spinnerPairedDevices.getSelectedItemPosition()), mHandler);
+                    mConnectThread.start();
                     break;
             }
         }
@@ -176,6 +198,16 @@ public class BluetoothActivity extends ActionBarActivity {
         public void onDestroy() {
             if (bluetoothAdapter.isEnabled()) {
                 getActivity().unregisterReceiver(deviceFoundReceiver);
+            }
+            try {
+                if (mAcceptThread != null) {
+                    mAcceptThread.join();
+                }
+                if (mConnectThread != null) {
+                    mConnectThread.join();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             super.onDestroy();
         }

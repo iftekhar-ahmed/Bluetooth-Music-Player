@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.apptitive.btmusicplayer.utils.Constants;
 
@@ -15,14 +14,16 @@ import java.io.IOException;
 /**
  * Created by Iftekhar on 11/8/2014.
  */
-public class ClientThread extends Thread {
+public class ConnectThread extends Thread {
 
     private BluetoothSocket mBluetoothSocket;
     private BluetoothAdapter bluetoothAdapter;
     private Context context;
+    private Handler mHandler;
 
-    public ClientThread(Context context, BluetoothDevice bluetoothDevice) {
+    public ConnectThread(Context context, BluetoothDevice bluetoothDevice, Handler handler) {
         this.context = context;
+        mHandler = handler;
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         Log.i("bluetooth device", bluetoothDevice.getName());
         BluetoothSocket tempSocket = null;
@@ -44,18 +45,12 @@ public class ClientThread extends Thread {
             ioe.printStackTrace();
             try {
                 mBluetoothSocket.close();
-                Log.i("From Client", "closing socket...");
+                mHandler.obtainMessage(Constants.CONNECTION_FAILED).sendToTarget();
             } catch (IOException e) {
             }
             return;
         }
-        Handler handler = new Handler(context.getMainLooper());
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(context, "One connection established", Toast.LENGTH_SHORT).show();
-            }
-        });
+        mHandler.obtainMessage(Constants.STATE_CONNECTED).sendToTarget();
     }
 
     public void cancel() {
