@@ -71,10 +71,19 @@ public class BluetoothActivity extends ActionBarActivity {
         private BluetoothAdapter bluetoothAdapter;
 
         private Spinner spinnerPairedDevices;
+        private ServerThread mServerThread;
+        private ClientThread mClientThread;
         private ArrayAdapter<BluetoothDevice> arrayAdapterPairedDevices;
 
         public BluetoothFragment() {
         }
+
+        /*private final Handler mHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+
+            }
+        };*/
 
         private final BroadcastReceiver deviceFoundReceiver = new BroadcastReceiver() {
             @Override
@@ -139,26 +148,26 @@ public class BluetoothActivity extends ActionBarActivity {
                     getActivity().registerReceiver(deviceFoundReceiver, deviceFoundIntentFilter);
                 }
             }
-            view.findViewById(R.id.btn_server).setOnClickListener(this);
-            view.findViewById(R.id.btn_client).setOnClickListener(this);
+            view.findViewById(R.id.btn_connect).setOnClickListener(this);
             if (bluetoothAdapter == null) {
                 Toast.makeText(getActivity(), "Your device does not support Bluetooth", Toast.LENGTH_SHORT).show();
-            } else if (!bluetoothAdapter.isEnabled()) {
-                Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(intent, REQUEST_ENABLE_BT);
+            } else {
+                if (bluetoothAdapter.isEnabled()) {
+                    mServerThread = new ServerThread(getActivity());
+                    mServerThread.start();
+                } else {
+                    Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    startActivityForResult(intent, REQUEST_ENABLE_BT);
+                }
             }
         }
 
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
-                case R.id.btn_server:
-                    ServerThread serverThread = new ServerThread(getActivity());
-                    serverThread.start();
-                    break;
-                case R.id.btn_client:
-                    ClientThread clientThread = new ClientThread(getActivity(), arrayAdapterPairedDevices.getItem(spinnerPairedDevices.getSelectedItemPosition()));
-                    clientThread.start();
+                case R.id.btn_connect:
+                    mClientThread = new ClientThread(getActivity(), arrayAdapterPairedDevices.getItem(spinnerPairedDevices.getSelectedItemPosition()));
+                    mClientThread.start();
                     break;
             }
         }
