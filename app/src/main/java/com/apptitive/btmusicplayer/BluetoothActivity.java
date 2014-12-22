@@ -19,16 +19,21 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.apptitive.btmusicplayer.connection.AcceptThread;
 import com.apptitive.btmusicplayer.connection.ConnectThread;
+import com.apptitive.btmusicplayer.transport.AudioStreamThread;
 
+import java.io.InputStream;
 import java.util.Set;
 
 import static com.apptitive.btmusicplayer.utils.Constants.CONNECTION_FAILED;
+import static com.apptitive.btmusicplayer.utils.Constants.CONNECTION_INTERRUPTED;
+import static com.apptitive.btmusicplayer.utils.Constants.DATA_READ;
 import static com.apptitive.btmusicplayer.utils.Constants.STATE_CONNECTED;
 
 
@@ -74,13 +79,21 @@ public class BluetoothActivity extends ActionBarActivity {
     public static class BluetoothFragment extends Fragment implements View.OnClickListener {
 
         private int mState;
+        private int bytes;
+        private byte[] buffer;
 
         private Spinner spinnerPairedDevices;
+        private Button buttonConnectDevice;
+        private Button buttonAudioStream;
+        private TextView tvMsg;
+
         private BluetoothAdapter bluetoothAdapter;
+        private ArrayAdapter<BluetoothDevice> arrayAdapterPairedDevices;
+        private BluetoothSocket mConnectedSocket;
         private AcceptThread mAcceptThread;
         private ConnectThread mConnectThread;
-        private BluetoothSocket mConnectedSocket;
-        private ArrayAdapter<BluetoothDevice> arrayAdapterPairedDevices;
+        private AudioStreamThread mAudioStreamThread;
+        private InputStream audioFileInputStream;
 
         private static final int REQUEST_ENABLE_BT = 100;
 
@@ -93,19 +106,54 @@ public class BluetoothActivity extends ActionBarActivity {
                 mState = msg.what;
                 switch (mState) {
                     case STATE_CONNECTED:
-                        mConnectedSocket = mAcceptThread.getConnectedSocket();
-                        mAcceptThread.cancel();
-                        mAcceptThread = null;
-                        mConnectThread.cancel();
-                        mConnectThread = null;
+                        mConnectedSocket = (BluetoothSocket) msg.obj;
                         Toast.makeText(getActivity(), "One connection established", Toast.LENGTH_SHORT).show();
+                        mAudioStreamThread = new AudioStreamThread(mConnectedSocket, this);
+                        buttonConnectDevice.setEnabled(false);
+                        buttonAudioStream.setEnabled(true);
                         break;
                     case CONNECTION_FAILED:
                         Toast.makeText(getActivity(), "Could not connect", Toast.LENGTH_SHORT).show();
+                        buttonConnectDevice.setEnabled(true);
+                        buttonAudioStream.setEnabled(false);
+                        mAcceptThread = new AcceptThread(getActivity(), this);
+                        mAcceptThread.start();
+                        break;
+                    case CONNECTION_INTERRUPTED:
+                        Toast.makeText(getActivity(), "Connection was interrupted", Toast.LENGTH_SHORT).show();
+                        buttonConnectDevice.setEnabled(true);
+                        buttonAudioStream.setEnabled(false);
+                        mAcceptThread = new AcceptThread(getActivity(), this);
+                        mAcceptThread.start();
+                        break;
+                    case DATA_READ:
+                        byte[] data = (byte[]) msg.obj;
+                        String message = new String(data, 0, msg.arg1);
+                        tvMsg.setText(message);
                         break;
                 }
             }
         };
+
+        private void sendAudio(InputStream audioFileInputStream) {
+            if (mAudioStreamThread == null) {
+                return;
+            }
+            byte[] buffer = new byte[1024];
+            int bytes;
+
+            /*try {
+                while ((bytes = audioFileInputStream.read(buffer)) != -1) {
+                    mAudioStreamThread.write(buffer);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }*/
+            String msg = "Hello from device " + arrayAdapterPairedDevices.getItem(
+                    spinnerPairedDevices.getSelectedItemPosition()).getName();
+
+            mAudioStreamThread.write(msg.getBytes());
+        }
 
         private final BroadcastReceiver deviceFoundReceiver = new BroadcastReceiver() {
             @Override
@@ -170,7 +218,11 @@ public class BluetoothActivity extends ActionBarActivity {
                     getActivity().registerReceiver(deviceFoundReceiver, deviceFoundIntentFilter);
                 }
             }
-            view.findViewById(R.id.btn_connect).setOnClickListener(this);
+            buttonConnectDevice = (Button) view.findViewById(R.id.btn_connect);
+            buttonConnectDevice.setOnClickListener(this);
+            buttonAudioStream = (Button) view.findViewById(R.id.btn_stream_audio);
+            buttonAudioStream.setOnClickListener(this);
+            tvMsg = (TextView) view.findViewById(R.id.tv_show_msg);
             if (bluetoothAdapter == null) {
                 Toast.makeText(getActivity(), "Your device does not support Bluetooth", Toast.LENGTH_SHORT).show();
             } else {
@@ -191,6 +243,9 @@ public class BluetoothActivity extends ActionBarActivity {
                     mConnectThread = new ConnectThread(getActivity(), arrayAdapterPairedDevices.getItem(spinnerPairedDevices.getSelectedItemPosition()), mHandler);
                     mConnectThread.start();
                     break;
+                case R.id.btn_stream_audio:
+                    audioFileInputStream = getResources().openRawResource(R.raw.blur);
+                    sendAudio(audioFileInputStream);
             }
         }
 

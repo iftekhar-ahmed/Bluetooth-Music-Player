@@ -47,14 +47,10 @@ public class AcceptThread extends Thread {
             if (bluetoothSocket != null) {
                 Log.i("From Server", "client connected");
                 connectedSocket = bluetoothSocket;
-                mHandler.obtainMessage(Constants.STATE_CONNECTED).sendToTarget();
+                mHandler.obtainMessage(Constants.STATE_CONNECTED, connectedSocket).sendToTarget();
                 break;
             }
         }
-    }
-
-    public synchronized BluetoothSocket getConnectedSocket() {
-        return connectedSocket;
     }
 
     public void cancel() {

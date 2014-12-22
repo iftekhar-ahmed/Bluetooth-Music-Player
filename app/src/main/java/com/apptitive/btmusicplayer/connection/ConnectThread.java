@@ -50,7 +50,7 @@ public class ConnectThread extends Thread {
             }
             return;
         }
-        mHandler.obtainMessage(Constants.STATE_CONNECTED).sendToTarget();
+        mHandler.obtainMessage(Constants.STATE_CONNECTED, mBluetoothSocket).sendToTarget();
     }
 
     public void cancel() {

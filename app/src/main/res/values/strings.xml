@@ -8,5 +8,6 @@
     <string name="discover_devices">Discover Devices</string>
     <string name="connect">Connect</string>
     <string name="label_paired_devices">Paired devices:</string>
+    <string name="stream_audio">Stream</string>
 
 </resources>

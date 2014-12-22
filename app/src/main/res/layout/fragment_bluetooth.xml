@@ -29,4 +29,21 @@
         android:layout_height="wrap_content"
         android:text="@string/connect" />
 
+    <Button
+        android:id="@+id/btn_stream_audio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/spinner_paired_devices"
+        android:layout_alignParentRight="true"
+        android:enabled="false"
+        android:text="@string/stream_audio" />
+
+    <TextView
+        android:id="@+id/tv_show_msg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/btn_connect"
+        android:layout_centerInParent="true"
+        android:textSize="18sp" />
+
 </RelativeLayout>
