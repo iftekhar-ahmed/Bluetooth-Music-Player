@@ -6,13 +6,15 @@ import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,6 +30,7 @@ import com.apptitive.btmusicplayer.connection.AcceptThread;
 import com.apptitive.btmusicplayer.connection.ConnectThread;
 import com.apptitive.btmusicplayer.transport.AudioStreamThread;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
 
@@ -91,8 +94,11 @@ public class BluetoothActivity extends ActionBarActivity {
         private ConnectThread mConnectThread;
         private AudioStreamThread mAudioStreamThread;
         private InputStream audioFileInputStream;
+        private AudioTrack audioTrack;
 
         private static final int REQUEST_ENABLE_BT = 100;
+        private final int bufferSize = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT);
 
         public BluetoothFragment() {
         }
@@ -107,6 +113,9 @@ public class BluetoothActivity extends ActionBarActivity {
                         Toast.makeText(getActivity(), "One connection established", Toast.LENGTH_SHORT).show();
                         mAudioStreamThread = new AudioStreamThread(mConnectedSocket, this);
                         mAudioStreamThread.start();
+                        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 44100, AudioFormat.CHANNEL_OUT_STEREO,
+                                AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
+                        audioTrack.play();
                         buttonConnectDevice.setEnabled(false);
                         buttonAudioStream.setEnabled(true);
                         break;
@@ -114,6 +123,7 @@ public class BluetoothActivity extends ActionBarActivity {
                         Toast.makeText(getActivity(), "Could not connect", Toast.LENGTH_SHORT).show();
                         buttonConnectDevice.setEnabled(true);
                         buttonAudioStream.setEnabled(false);
+                        audioTrack.release();
                         mAcceptThread = new AcceptThread(getActivity(), this);
                         mAcceptThread.start();
                         break;
@@ -121,23 +131,26 @@ public class BluetoothActivity extends ActionBarActivity {
                         Toast.makeText(getActivity(), "Connection was interrupted", Toast.LENGTH_SHORT).show();
                         buttonConnectDevice.setEnabled(true);
                         buttonAudioStream.setEnabled(false);
+                        audioTrack.release();
                         mAcceptThread = new AcceptThread(getActivity(), this);
                         mAcceptThread.start();
                         break;
                     case DATA_READ:
-                        byte[] data = (byte[]) msg.obj;
-                        String message = new String(data, 0, msg.arg1);
-                        Log.i("Read", message);
+                        byte[] audio_data = (byte[]) msg.obj;
+                        int byte_count = msg.arg1;
+                        if (byte_count != -1) {
+                            audioTrack.write(audio_data, 0, byte_count);
+                        }
                         break;
                 }
             }
         };
 
-        private void sendAudio() {
+        private void sendAudio(InputStream audioFileInputStream) {
             if (mAudioStreamThread == null) {
                 return;
             }
-            /*byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[1024];
             int bytes;
 
             try {
@@ -146,11 +159,7 @@ public class BluetoothActivity extends ActionBarActivity {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-            }*/
-            String msg = "Hello from device";
-
-            byte[] buffer = msg.getBytes();
-            mAudioStreamThread.write(buffer);
+            }
         }
 
         private final BroadcastReceiver deviceFoundReceiver = new BroadcastReceiver() {
@@ -266,9 +275,8 @@ public class BluetoothActivity extends ActionBarActivity {
                     mConnectThread.start();
                     break;
                 case R.id.btn_stream_audio:
-                    /*audioFileInputStream = getResources().openRawResource(R.raw.blur);
-                    sendAudio(audioFileInputStream);*/
-                    sendAudio();
+                    audioFileInputStream = getResources().openRawResource(R.raw.blur);
+                    sendAudio(audioFileInputStream);
             }
         }
 
