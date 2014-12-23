@@ -38,12 +38,4 @@
         android:enabled="false"
         android:text="@string/stream_audio" />
 
-    <TextView
-        android:id="@+id/tv_show_msg"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/btn_connect"
-        android:layout_centerInParent="true"
-        android:textSize="18sp" />
-
 </RelativeLayout>

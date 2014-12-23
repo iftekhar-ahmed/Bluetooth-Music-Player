@@ -16,7 +16,7 @@ import java.io.IOException;
  */
 public class AcceptThread extends Thread {
 
-    private BluetoothServerSocket mServerSocket;
+    private final BluetoothServerSocket mServerSocket;
     private BluetoothSocket connectedSocket;
     private BluetoothAdapter mBluetoothAdapter;
     private Context context;

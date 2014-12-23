@@ -14,9 +14,9 @@ import java.io.OutputStream;
  */
 public class AudioStreamThread extends Thread {
 
-    private BluetoothSocket bluetoothSocket;
-    private InputStream socketInputStream;
-    private OutputStream socketOutputStream;
+    private final BluetoothSocket bluetoothSocket;
+    private final InputStream socketInputStream;
+    private final OutputStream socketOutputStream;
     private Handler mHandler;
 
     public AudioStreamThread(BluetoothSocket bluetoothSocket, Handler dataHandler) {
@@ -30,8 +30,8 @@ public class AudioStreamThread extends Thread {
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
-        this.socketInputStream = inputStream;
-        this.socketOutputStream = outputStream;
+        socketInputStream = inputStream;
+        socketOutputStream = outputStream;
     }
 
     @Override

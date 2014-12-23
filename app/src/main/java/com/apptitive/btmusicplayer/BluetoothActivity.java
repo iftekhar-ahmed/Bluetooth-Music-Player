@@ -6,13 +6,13 @@ import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -79,13 +79,10 @@ public class BluetoothActivity extends ActionBarActivity {
     public static class BluetoothFragment extends Fragment implements View.OnClickListener {
 
         private int mState;
-        private int bytes;
-        private byte[] buffer;
 
         private Spinner spinnerPairedDevices;
         private Button buttonConnectDevice;
         private Button buttonAudioStream;
-        private TextView tvMsg;
 
         private BluetoothAdapter mBluetoothAdapter;
         private ArrayAdapter<BluetoothDevice> arrayAdapterPairedDevices;
@@ -109,6 +106,7 @@ public class BluetoothActivity extends ActionBarActivity {
                         mConnectedSocket = (BluetoothSocket) msg.obj;
                         Toast.makeText(getActivity(), "One connection established", Toast.LENGTH_SHORT).show();
                         mAudioStreamThread = new AudioStreamThread(mConnectedSocket, this);
+                        mAudioStreamThread.start();
                         buttonConnectDevice.setEnabled(false);
                         buttonAudioStream.setEnabled(true);
                         break;
@@ -129,7 +127,7 @@ public class BluetoothActivity extends ActionBarActivity {
                     case DATA_READ:
                         byte[] data = (byte[]) msg.obj;
                         String message = new String(data, 0, msg.arg1);
-                        tvMsg.setText(message);
+                        Log.i("Read", message);
                         break;
                 }
             }
@@ -139,20 +137,20 @@ public class BluetoothActivity extends ActionBarActivity {
             if (mAudioStreamThread == null) {
                 return;
             }
-            byte[] buffer = new byte[1024];
+            /*byte[] buffer = new byte[1024];
             int bytes;
 
-            /*try {
+            try {
                 while ((bytes = audioFileInputStream.read(buffer)) != -1) {
                     mAudioStreamThread.write(buffer);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }*/
-            String msg = "Hello from device " + arrayAdapterPairedDevices.getItem(
-                    spinnerPairedDevices.getSelectedItemPosition()).getName();
+            String msg = "Hello from device";
 
-            mAudioStreamThread.write(msg.getBytes());
+            byte[] buffer = msg.getBytes();
+            mAudioStreamThread.write(buffer);
         }
 
         private final BroadcastReceiver deviceFoundReceiver = new BroadcastReceiver() {
@@ -258,7 +256,6 @@ public class BluetoothActivity extends ActionBarActivity {
             buttonConnectDevice.setOnClickListener(this);
             buttonAudioStream = (Button) view.findViewById(R.id.btn_stream_audio);
             buttonAudioStream.setOnClickListener(this);
-            tvMsg = (TextView) view.findViewById(R.id.tv_show_msg);
         }
 
         @Override
