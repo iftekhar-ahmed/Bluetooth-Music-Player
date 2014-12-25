@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -29,6 +30,7 @@ import android.widget.Toast;
 import com.apptitive.btmusicplayer.connection.AcceptThread;
 import com.apptitive.btmusicplayer.connection.ConnectThread;
 import com.apptitive.btmusicplayer.transport.AudioStreamThread;
+import com.apptitive.btmusicplayer.utils.AudioDecoder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -274,8 +276,14 @@ public class BluetoothActivity extends ActionBarActivity {
                     mConnectThread.start();
                     break;
                 case R.id.btn_stream_audio:
-                    audioFileInputStream = getResources().openRawResource(R.raw.blur);
-                    sendAudio(audioFileInputStream);
+                    /*audioFileInputStream = getResources().openRawResource(R.raw.blur);
+                    sendAudio(audioFileInputStream);*/
+                    new AudioDecoder(getActivity()){
+                        @Override
+                        protected void onProgressUpdate(byte[]... values) {
+                            mAudioStreamThread.write(values[0]);
+                        }
+                    }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                     break;
             }
         }
