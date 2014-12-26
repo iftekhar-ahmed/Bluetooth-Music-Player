@@ -1,6 +1,5 @@
 package com.apptitive.btmusicplayer.utils;
 
-import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -10,8 +9,9 @@ import android.media.MediaFormat;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.apptitive.btmusicplayer.R;
+import com.apptitive.btmusicplayer.transport.AudioStreamThread;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -20,12 +20,14 @@ import java.nio.ByteBuffer;
  */
 public class AudioDecoder extends AsyncTask<Void, byte[], Void> {
 
-    private Context context;
+    private int inputBufIndex;
+    private Boolean doStop = false;
+
+    private FileDescriptor mAudioFileDescriptor;
     private MediaExtractor extractor;
     private MediaCodec codec;
     private AudioTrack audioTrack;
-    private int inputBufIndex;
-    private Boolean doStop = false;
+    private AudioStreamThread mAudioStreamThread;
 
     private void decodeLoop() throws IOException {
 
@@ -35,7 +37,7 @@ public class AudioDecoder extends AsyncTask<Void, byte[], Void> {
         // extractor gets information about the stream
         extractor = new MediaExtractor();
         try {
-            extractor.setDataSource(context.getResources().openRawResourceFd(R.raw.blur).getFileDescriptor());
+            extractor.setDataSource(mAudioFileDescriptor);
         } catch (Exception e) {
             return;
         }
@@ -52,6 +54,7 @@ public class AudioDecoder extends AsyncTask<Void, byte[], Void> {
 
         // get the sample rate to configure AudioTrack
         int sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+        Log.i("sample rate", "" + sampleRate);
 
         // create our AudioTrack instance
         audioTrack = new AudioTrack(
@@ -109,7 +112,7 @@ public class AudioDecoder extends AsyncTask<Void, byte[], Void> {
                 byte[] chunk = new byte[info.size];
                 buf.get(chunk);
                 buf.clear();
-                publishProgress(chunk);
+                mAudioStreamThread.write(chunk);
                 audioTrack.write(chunk, 0, chunk.length);
                 codec.releaseOutputBuffer(outputBufIndex, false);
             } else if (outputBufIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
@@ -143,8 +146,9 @@ public class AudioDecoder extends AsyncTask<Void, byte[], Void> {
         }
     }
 
-    public AudioDecoder(Context context) {
-        this.context = context;
+    public AudioDecoder(FileDescriptor audioFileDescriptor, AudioStreamThread audioStreamThread) {
+        mAudioFileDescriptor = audioFileDescriptor;
+        mAudioStreamThread = audioStreamThread;
     }
 
     @Override

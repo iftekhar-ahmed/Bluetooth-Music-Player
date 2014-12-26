@@ -100,7 +100,11 @@ public class BluetoothActivity extends ActionBarActivity {
 
         private final int REQUEST_ENABLE_BT = 100;
         private final int SAMPLE_RATE_IN_HZ = 44100;
-        private final int BUFFER_SIZE = 5 * SAMPLE_RATE_IN_HZ * 2 * 2;
+        public final int BUFFER_SIZE = AudioTrack.getMinBufferSize(
+                SAMPLE_RATE_IN_HZ,
+                AudioFormat.CHANNEL_OUT_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT
+        );
 
         private final BroadcastReceiver deviceFoundReceiver = new BroadcastReceiver() {
             @Override
@@ -121,7 +125,7 @@ public class BluetoothActivity extends ActionBarActivity {
                     case STATE_CONNECTED:
                         mConnectedSocket = (BluetoothSocket) msg.obj;
                         Toast.makeText(getActivity(), "One connection established", Toast.LENGTH_SHORT).show();
-                        mAudioStreamThread = new AudioStreamThread(mConnectedSocket, this);
+                        mAudioStreamThread = new AudioStreamThread(mConnectedSocket, this, BUFFER_SIZE);
                         mAudioStreamThread.start();
                         audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE_IN_HZ, AudioFormat.CHANNEL_OUT_STEREO,
                                 AudioFormat.ENCODING_PCM_16BIT, BUFFER_SIZE, AudioTrack.MODE_STREAM);
@@ -159,7 +163,7 @@ public class BluetoothActivity extends ActionBarActivity {
         public BluetoothFragment() {
         }
 
-        private void sendAudio(InputStream audioFileInputStream) {
+        /*private void sendAudio(InputStream audioFileInputStream) {
             if (mAudioStreamThread == null) {
                 return;
             }
@@ -172,7 +176,7 @@ public class BluetoothActivity extends ActionBarActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
 
         private void listPairedDevices() {
             Set<BluetoothDevice> paired_device = mBluetoothAdapter.getBondedDevices();
@@ -278,11 +282,7 @@ public class BluetoothActivity extends ActionBarActivity {
                 case R.id.btn_stream_audio:
                     /*audioFileInputStream = getResources().openRawResource(R.raw.blur);
                     sendAudio(audioFileInputStream);*/
-                    new AudioDecoder(getActivity()){
-                        @Override
-                        protected void onProgressUpdate(byte[]... values) {
-                            mAudioStreamThread.write(values[0]);
-                        }
+                    new AudioDecoder(getResources().openRawResourceFd(R.raw.blur).getFileDescriptor(), mAudioStreamThread) {
                     }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                     break;
             }
